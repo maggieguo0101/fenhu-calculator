@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>北交所分户计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            padding: 15px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4A90E2;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #4A90E2;
+        }
+
+        .amount-field {
+            flex: 0.8;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-remove {
+            background: #ff4d4f;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-remove:hover {
+            background: #ff7875;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-primary {
+            background: #4A90E2;
+            color: white;
+            width: 100%;
+            font-size: 18px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .btn-primary:hover {
+            background: #357ABD;
+        }
+
+        .btn-success {
+            background: #52c41a;
+            color: white;
+            width: 100%;
+            font-size: 18px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .btn-success:hover {
+            background: #73d13d;
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-item.warning {
+            background: #fff7e6;
+            border: 2px solid #ffd591;
+        }
+
+        .summary-item.success {
+            background: #f6ffed;
+            border: 2px solid #b7eb8f;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #fafafa;
+            font-weight: 500;
+        }
+
+        .error-message {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .stock-name-input {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .input-row {
+                flex-wrap: wrap;
+            }
+
+            .amount-field {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">北交所分户计算器</div>
+            <div class="subtitle">账户持有人优先，剩余资金按比例分配</div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">申购股票名称</div>
+            <input type="text" id="stockName" class="input-field stock-name-input" placeholder="请输入申购股票名称（可选）">
+        </div>
+
+        <div class="card">
+            <div class="section-title">账户信息（每户默认980万）</div>
+            <div id="accountsList"></div>
+            <button class="btn btn-secondary" onclick="addAccount()">+ 添加账户</button>
+        </div>
+
+        <div class="card">
+            <div class="section-title">出资人信息</div>
+            <div id="investorsList"></div>
+            <button class="btn btn-secondary" onclick="addInvestor()">+ 添加出资人</button>
+        </div>
+
+        <div class="card">
+            <button class="btn btn-primary" onclick="calculate()">开始计算分配</button>
+            <button class="btn btn-secondary" onclick="fillExampleData()">填充示例数据</button>
+            <button class="btn btn-secondary" onclick="clearAll()">清空数据</button>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div id="resultSection" class="result-section">
+            <div class="card">
+                <h3>分配结果</h3>
+                <div id="summary" class="summary"></div>
+                <div id="stockNameDisplay" style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: bold;"></div>
+                <div class="table-container">
+                    <table id="resultTable">
+                        <thead id="resultHead">
+                            <tr>
+                                <th>出资人</th>
+                                <th>出资金额</th>
+                                <th>账户分配</th>
+                                <th>剩余资金</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultBody"></tbody>
+                    </table>
+                </div>
+                <button class="btn btn-success" onclick="generateShareImage()">生成分享图片</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隐藏的Canvas用于生成图片 -->
+    <canvas id="shareCanvas" style="display: none;"></canvas>
+
+    <script>
+        // 数据存储
+        let accounts = [];
+        let investors = [];
+        let currentResult = null;
+
+        // 渲染账户列表
+        function renderAccounts() {
+            const container = document.getElementById('accountsList');
+            container.innerHTML = accounts.map((account, index) => `
+                <div class="input-row">
+                    <input type="text" class="input-field" placeholder="账户名称"
+                           value="${account.name}" onchange="updateAccountName(${index}, this.value)">
+                    <input type="number" class="input-field amount-field" placeholder="金额（万）"
+                           value="${account.amount}" onchange="updateAccountAmount(${index}, this.value)">
+                    <button class="btn btn-remove" onclick="removeAccount(${index})"
+                            style="${accounts.length <= 1 ? 'display:none' : ''}">删除</button>
+                </div>
+            `).join('');
+        }
+
+        // 渲染出资人列表
+        function renderInvestors() {
+            const container = document.getElementById('investorsList');
+            container.innerHTML = investors.map((investor, index) => `
+                <div class="input-row">
+                    <input type="text" class="input-field" placeholder="出资人姓名"
+                           value="${investor.name}" onchange="updateInvestorName(${index}, this.value)">
+                    <input type="number" class="input-field amount-field" placeholder="出资金额（万）"
+                           value="${investor.amount}" onchange="updateInvestorAmount(${index}, this.value)">
+                    <button class="btn btn-remove" onclick="removeInvestor(${index})">删除</button>
+                </div>
+            `).join('');
+        }
+
+        // 填充示例数据（使用通用名字）
+        function fillExampleData() {
+            console.log('fillExampleData: 开始填充示例数据');
+            accounts = [
+                { id: 1, name: '账户A', amount: 980 },
+                { id: 2, name: '账户B', amount: 980 }
+            ];
+
+            investors = [
+                { id: 1, name: '张三', amount: 352 },
+                { id: 2, name: '李四', amount: 443 },
+                { id: 3, name: '王五', amount: 132 },
+                { id: 4, name: '赵六', amount: 210 },
+                { id: 5, name: '账户A', amount: 353 },
+                { id: 6, name: '孙七', amount: 145 },
+                { id: 7, name: '周八', amount: 30 },
+                { id: 8, name: '吴九', amount: 70 },
+                { id: 9, name: '郑十', amount: 5 },
+                { id: 10, name: '钱十一', amount: 128 }
+            ];
+
+            console.log('fillExampleData: 数据已设置，开始渲染');
+            renderAccounts();
+            renderInvestors();
+            console.log('fillExampleData: 渲染完成');
+        }
+
+        // 页面加载时初始化空数据
+        window.onload = function() {
+            console.log('页面加载完成');
+            // 默认添加一个空账户和一个空出资人
+            accounts = [{ id: 1, name: '', amount: 980 }];
+            investors = [{ id: 1, name: '', amount: 0 }];
+            renderAccounts();
+            renderInvestors();
+        };
+
+        // 其他函数保持不变...
+        function addAccount() {
+            const newId = Math.max(...accounts.map(a => a.id), 0) + 1;
+            accounts.push({ id: newId, name: '', amount: 980 });
+            renderAccounts();
+        }
+
+        function removeAccount(index) {
+            if (accounts.length > 1) {
+                accounts.splice(index, 1);
+                renderAccounts();
+            }
+        }
+
+        function addInvestor() {
+            const newId = Math.max(...investors.map(i => i.id), 0) + 1;
+            investors.push({ id: newId, name: '', amount: '' });
+            renderInvestors();
+        }
+
+        function removeInvestor(index) {
+            investors.splice(index, 1);
+            renderInvestors();
+        }
+
+        function updateAccountName(index, value) {
+            accounts[index].name = value;
+        }
+
+        function updateAccountAmount(index, value) {
+            accounts[index].amount = parseFloat(value) || 0;
+        }
+
+        function updateInvestorName(index, value) {
+            investors[index].name = value;
+        }
+
+        function updateInvestorAmount(index, value) {
+            investors[index].amount = parseFloat(value) || 0;
+        }
+
+        function clearAll() {
+            accounts = [
+                { id: 1, name: '', amount: 980 },
+                { id: 2, name: '', amount: 980 }
+            ];
+            investors = [
+                { id: 1, name: '', amount: '' },
+                { id: 2, name: '', amount: '' },
+                { id: 3, name: '', amount: '' }
+            ];
+            renderAccounts();
+            renderInvestors();
+            hideError();
+            document.getElementById('resultSection').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // 计算分配 - 最终修正版
+        function calculate() {
+            hideError();
+
+            // 验证输入
+            const validInvestors = investors.filter(i => i.name && i.amount > 0);
+            if (validInvestors.length === 0) {
+                showError('请至少输入一位出资人的有效信息');
+                return;
+            }
+
+            // 准备数据
+            const accountsData = {};
+            accounts.forEach(account => {
+                if (account.name) {
+                    accountsData[account.name] = account.amount;
+                }
+            });
+
+            if (Object.keys(accountsData).length === 0) {
+                showError('请至少输入一个有效的账户');
+                return;
+            }
+
+            // 计算分配
+            currentResult = allocateFundsFinal(accountsData, validInvestors);
+            displayResult(currentResult);
+        }
+
+        // 计算分配函数 - 三阶段分配算法
+        function allocateFundsFinal(accounts, investors) {
+            let result = {
+                allocation: {},
+                accountFilled: {},
+                shortfall: {},
+                totalUsed: 0,
+                totalAvailable: 0
+            };
+
+            // 初始化
+            for (const account in accounts) {
+                result.allocation[account] = {};
+                result.accountFilled[account] = 0;
+            }
+
+            // 计算总资金
+            investors.forEach(investor => {
+                result.totalAvailable += investor.amount;
+            });
+
+            // ========== 第一阶段：本人资金优先匹配本人账户 ==========
+            const publicFunds = {}; // 公共待分配资金池
+
+            for (const account in accounts) {
+                const needed = accounts[account];
+                const accountHolder = investors.find(inv => inv.name === account);
+
+                if (accountHolder && accountHolder.amount > 0) {
+                    const investorAmount = accountHolder.amount;
+
+                    if (investorAmount <= needed) {
+                        // 情况A：本人钱 <= 账户需求，全部放入自己账户
+                        result.allocation[account][accountHolder.name] = investorAmount;
+                        result.accountFilled[account] = investorAmount;
+                        result.totalUsed += investorAmount;
+                        // 账户还有缺口，但没有剩余资金
+                    } else {
+                        // 情况B：本人钱 > 账户需求，填满账户，剩余进入公共资金池
+                        result.allocation[account][accountHolder.name] = needed;
+                        result.accountFilled[account] = needed;
+                        result.totalUsed += needed;
+                        // 剩余资金进入公共资金池
+                        publicFunds[accountHolder.name] = investorAmount - needed;
+                    }
+                }
+            }
+
+            // 将没有账户的出资人资金也加入公共资金池
+            investors.forEach(investor => {
+                if (!accounts.hasOwnProperty(investor.name)) {
+                    publicFunds[investor.name] = investor.amount;
+                }
+            });
+
+            // ========== 第二阶段：完整资金优先匹配（尽量不拆分） ==========
+            // 获取有缺口的账户
+            const accountsWithShortfall = [];
+            for (const account in accounts) {
+                const needed = accounts[account];
+                const filled = result.accountFilled[account];
+                if (filled < needed) {
+                    const shortfall = needed - filled;
+                    accountsWithShortfall.push({ account, shortfall });
+                }
+            }
+
+            // 按缺口金额从大到小排序
+            accountsWithShortfall.sort((a, b) => b.shortfall - a.shortfall);
+
+            // 将公共资金池按金额从大到小排序
+            const sortedPublicFunds = Object.entries(publicFunds).sort((a, b) => b[1] - a[1]);
+
+            // 绝对完美匹配（Perfect Match）
+            // 检查是否有资金金额刚好等于某个账户缺口
+            for (let i = 0; i < sortedPublicFunds.length; i++) {
+                const [investor, amount] = sortedPublicFunds[i];
+                if (amount <= 0) continue;
+
+                for (let j = 0; j < accountsWithShortfall.length; j++) {
+                    const { account, shortfall } = accountsWithShortfall[j];
+                    if (shortfall <= 0) continue;
+
+                    if (amount === shortfall) {
+                        // 完美匹配
+                        result.allocation[account][investor] = amount;
+                        result.accountFilled[account] += amount;
+                        result.totalUsed += amount;
+                        // 标记为已处理
+                        sortedPublicFunds[i] = [investor, 0];
+                        accountsWithShortfall[j].shortfall = 0;
+                        break;
+                    }
+                }
+            }
+
+            // 最优容纳匹配（Best Fit）
+            // 对每笔资金寻找能完整装下且剩余缺口最小的账户
+            for (let i = 0; i < sortedPublicFunds.length; i++) {
+                const [investor, amount] = sortedPublicFunds[i];
+                if (amount <= 0) continue;
+
+                let bestAccount = null;
+                let bestRemainingGap = Infinity;
+                let bestIndex = -1;
+
+                for (let j = 0; j < accountsWithShortfall.length; j++) {
+                    const { account, shortfall } = accountsWithShortfall[j];
+                    if (shortfall <= 0) continue;
+
+                    if (amount <= shortfall && shortfall - amount < bestRemainingGap) {
+                        bestAccount = account;
+                        bestRemainingGap = shortfall - amount;
+                        bestIndex = j;
+                    }
+                }
+
+                if (bestAccount) {
+                    // 找到了最优账户
+                    result.allocation[bestAccount][investor] = amount;
+                    result.accountFilled[bestAccount] += amount;
+                    result.totalUsed += amount;
+                    // 更新缺口
+                    accountsWithShortfall[bestIndex].shortfall -= amount;
+                    // 标记资金已处理
+                    sortedPublicFunds[i] = [investor, 0];
+                }
+            }
+
+            // ========== 第三阶段：不得已的拆分（大额填大坑） ==========
+            // 处理剩余的资金
+            for (let i = 0; i < sortedPublicFunds.length; i++) {
+                const [investor, amount] = sortedPublicFunds[i];
+                if (amount <= 0) continue;
+
+                let remainingAmount = amount;
+
+                // 重新排序缺口（从大到小）
+                accountsWithShortfall.sort((a, b) => b.shortfall - a.shortfall);
+
+                for (const { account, shortfall } of accountsWithShortfall) {
+                    if (remainingAmount <= 0 || shortfall <= 0) continue;
+
+                    // 填满当前缺口最大的账户
+                    const toAllocate = Math.min(remainingAmount, shortfall);
+                    result.allocation[account][investor] = (result.allocation[account][investor] || 0) + toAllocate;
+                    result.accountFilled[account] += toAllocate;
+                    result.totalUsed += toAllocate;
+                    remainingAmount -= toAllocate;
+
+                    // 更新该账户的缺口
+                    const idx = accountsWithShortfall.findIndex(item => item.account === account);
+                    if (idx !== -1) {
+                        accountsWithShortfall[idx].shortfall -= toAllocate;
+                    }
+                }
+            }
+
+            // 计算最终缺口
+            for (const account in accounts) {
+                result.shortfall[account] = Math.max(0, accounts[account] - result.accountFilled[account]);
+            }
+
+            return result;
+        }
+
+        // 显示结果
+        function displayResult(result) {
+            const resultSection = document.getElementById('resultSection');
+            const summary = document.getElementById('summary');
+            const stockNameDisplay = document.getElementById('stockNameDisplay');
+            const stockName = document.getElementById('stockName').value;
+
+            // 显示股票名称
+            if (stockName) {
+                stockNameDisplay.textContent = `${stockName} 申购分配方案`;
+            } else {
+                stockNameDisplay.textContent = '申购分配方案';
+            }
+
+            // 计算总需求
+            const totalNeeded = Object.keys(result.accountFilled).reduce((sum, account) => {
+                const accountData = accounts.find(function(a) { return a.name === account; });
+                return sum + (accountData && accountData.amount || 0);
+            }, 0);
+
+            // 显示汇总信息
+            summary.innerHTML = `
+                <div class="summary-item ${result.totalUsed < totalNeeded ? 'warning' : 'success'}">
+                    <div class="summary-label">已募集</div>
+                    <div class="summary-value">${formatAmount(result.totalUsed)}</div>
+                </div>
+                <div class="summary-item warning">
+                    <div class="summary-label">资金缺口</div>
+                    <div class="summary-value">${formatAmount(totalNeeded - result.totalUsed)}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">参与人数</div>
+                    <div class="summary-value">${investors.filter(i => i.name && i.amount > 0).length}人</div>
+                </div>
+            `;
+
+            // 生成详细表格
+            const thead = document.getElementById('resultHead');
+            const tbody = document.getElementById('resultBody');
+            tbody.innerHTML = '';
+
+            // 动态构建表头
+            const accountNames = Object.keys(result.allocation);
+            let headerHTML = '<tr><th>出资人</th><th>出资金额</th>';
+            accountNames.forEach(function(accName) {
+                headerHTML += '<th>' + accName + '</th>';
+            });
+            headerHTML += '<th>剩余资金</th></tr>';
+            thead.innerHTML = headerHTML;
+
+            // 按出资人显示，每行一个出资人
+            investors.forEach(investor => {
+                if (!investor.name || investor.amount <= 0) return;
+
+                // 动态获取所有账户的分配
+                const accountAllocs = {};
+                let totalUsed = 0;
+                Object.keys(result.allocation).forEach(function(accName) {
+                    const alloc = (result.allocation[accName] && result.allocation[accName][investor.name]) || 0;
+                    accountAllocs[accName] = alloc;
+                    totalUsed += alloc;
+                });
+
+                // 构建动态表格行
+                let allocCells = '';
+                Object.keys(accountAllocs).forEach(function(accName) {
+                    const alloc = accountAllocs[accName];
+                    allocCells += `<td style="text-align: right; color: #52c41a;">${alloc > 0 ? formatAmount(alloc) : ''}</td>`;
+                });
+
+                const investorRow = document.createElement('tr');
+                investorRow.innerHTML = `
+                    <td>${investor.name}</td>
+                    <td style="text-align: right;">${formatAmount(investor.amount)}</td>
+                    ${allocCells}
+                    <td style="text-align: right; color: #ff4d4f;">${formatAmount(investor.amount - totalUsed)}</td>
+                `;
+                tbody.appendChild(investorRow);
+            });
+
+            // 添加账户汇总行
+            const accountNames = Object.keys(result.allocation);
+            let summaryAllocCells = '';
+            let totalNeeded = 0;
+            let totalFilled = 0;
+
+            accountNames.forEach(function(accName) {
+                const filled = result.accountFilled[accName] || 0;
+                const acc = accounts.find(function(a) { return a.name === accName; });
+                const needed = (acc && acc.amount) || 0;
+                totalNeeded += needed;
+                totalFilled += filled;
+                summaryAllocCells += `<td style="text-align: right; color: ${filled < needed ? '#ff4d4f' : '#52c41a'};">
+                    ${formatAmount(filled)}${filled < needed ? ' (缺口' + formatAmount(needed - filled) + ')' : ''}
+                </td>`;
+            });
+
+            const summaryRow = document.createElement('tr');
+            summaryRow.style.backgroundColor = '#f0f2f5';
+            summaryRow.style.fontWeight = 'bold';
+            summaryRow.innerHTML = `
+                <td>账户汇总</td>
+                <td style="text-align: right;">${formatAmount(totalNeeded)}</td>
+                ${summaryAllocCells}
+                <td style="text-align: right; color: #ff4d4f;">
+                    ${formatAmount(totalNeeded - totalFilled)}
+                </td>
+            `;
+            tbody.appendChild(summaryRow);
+
+            resultSection.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 格式化金额显示
+        function formatAmount(amount) {
+            if (amount === 0) {
+                return '';
+            }
+            if (amount >= 10000) {
+                return (amount / 10000).toFixed(2) + '亿';
+            } else if (amount >= 1) {
+                return amount.toFixed(2) + '万';
+            } else {
+                return (amount * 10000).toFixed(0) + '元';
+            }
+        }
+
+        // 生成分享图片
+        function generateShareImage() {
+            if (!currentResult) {
+                showError('请先进行计算');
+                return;
+            }
+
+            const canvas = document.getElementById('shareCanvas');
+            const ctx = canvas.getContext('2d');
+            const stockName = document.getElementById('stockName').value || '申购';
+
+            // 计算有效出资人数量
+            const validInvestors = investors.filter(function(inv) { return inv.name && inv.amount > 0; });
+            const investorCount = validInvestors.length;
+
+            // 判断哪些账户有实际分配数据
+            const activeAccounts = [];
+            const allAccountNames = Object.keys(currentResult.allocation);
+            allAccountNames.forEach(function(accName) {
+                const filled = currentResult.accountFilled[accName] || 0;
+                if (filled > 0) {
+                    activeAccounts.push(accName);
+                }
+            });
+
+            // 动态设置列宽 - 根据有效账户数量
+            const rowHeight = 40;
+            const tableWidth = 720; // 总宽度减去边距
+            const nameColWidth = 120;
+            const amountColWidth = 120;
+            const accountColWidth = activeAccounts.length > 0 ? (tableWidth - nameColWidth - amountColWidth) / activeAccounts.length : 0;
+
+            // 构建表头
+            const headers = ['出资人', '出资金额'];
+            activeAccounts.forEach(function(acc) { headers.push(acc); });
+
+            // 动态计算画布高度
+            const headerHeight = 60;
+            const tableStartY = 100;
+            const footerHeight = 60;
+            const totalHeight = headerHeight + tableStartY + (investorCount + 2) * rowHeight + footerHeight;
+
+            // 设置画布大小
+            canvas.width = 800;
+            canvas.height = totalHeight;
+
+            // 背景
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 标题
+            ctx.fillStyle = '#4A90E2';
+            ctx.font = 'bold 36px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(stockName + ' 分配方案', canvas.width / 2, 50);
+
+            // 绘制表格
+            const startY = tableStartY;
+
+            // 表头背景 - 浅蓝色
+            ctx.fillStyle = '#E3F2FD';
+            ctx.fillRect(40, startY, tableWidth, rowHeight);
+
+            // 绘制表格线和内容
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#333';
+
+            let currentY = startY;
+
+            // 绘制表头
+            let currentX = 40;
+            // 出资人列
+            ctx.strokeRect(currentX, currentY, nameColWidth, rowHeight);
+            ctx.textAlign = 'center';
+            ctx.fillText(headers[0], currentX + nameColWidth / 2, currentY + rowHeight / 2 + 5);
+            currentX += nameColWidth;
+            // 出资金额列
+            ctx.strokeRect(currentX, currentY, amountColWidth, rowHeight);
+            ctx.fillText(headers[1], currentX + amountColWidth / 2, currentY + rowHeight / 2 + 5);
+            currentX += amountColWidth;
+            // 各账户列
+            for (let i = 2; i < headers.length; i++) {
+                ctx.strokeRect(currentX, currentY, accountColWidth, rowHeight);
+                ctx.fillText(headers[i], currentX + accountColWidth / 2, currentY + rowHeight / 2 + 5);
+                currentX += accountColWidth;
+            }
+
+            currentY += rowHeight;
+
+            // 绘制数据行 - 按出资人显示
+            validInvestors.forEach(function(investor) {
+                currentX = 40;
+
+                // 绘制行边框
+                ctx.strokeRect(40, currentY, tableWidth, rowHeight);
+
+                // 出资人名称
+                ctx.fillStyle = '#333';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(investor.name, currentX + nameColWidth / 2, currentY + rowHeight / 2 + 5);
+                currentX += nameColWidth;
+
+                // 出资金额
+                ctx.fillText(formatAmount(investor.amount), currentX + amountColWidth / 2, currentY + rowHeight / 2 + 5);
+                currentX += amountColWidth;
+
+                // 各账户分配
+                ctx.fillStyle = '#52c41a';
+                activeAccounts.forEach(function(accName) {
+                    const alloc = (currentResult.allocation[accName] && currentResult.allocation[accName][investor.name]) || 0;
+                    if (alloc > 0) {
+                        ctx.fillText(formatAmount(alloc), currentX + accountColWidth / 2, currentY + rowHeight / 2 + 5);
+                    }
+                    currentX += accountColWidth;
+                });
+
+                ctx.fillStyle = '#333';
+                currentY += rowHeight;
+            });
+
+            // 绘制账户汇总行
+            currentX = 40;
+
+            ctx.fillStyle = '#f0f2f5';
+            ctx.fillRect(40, currentY, tableWidth, rowHeight);
+            ctx.strokeRect(40, currentY, tableWidth, rowHeight);
+
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('账户汇总', currentX + nameColWidth / 2, currentY + rowHeight / 2 + 5);
+            currentX += nameColWidth;
+
+            // 计算总需求
+            let totalNeeded = 0;
+            activeAccounts.forEach(function(accName) {
+                const acc = accounts.find(function(a) { return a.name === accName; });
+                totalNeeded += (acc && acc.amount) || 0;
+            });
+            ctx.fillText(formatAmount(totalNeeded), currentX + amountColWidth / 2, currentY + rowHeight / 2 + 5);
+            currentX += amountColWidth;
+
+            // 各账户汇总
+            activeAccounts.forEach(function(accName) {
+                const filled = currentResult.accountFilled[accName] || 0;
+                const acc = accounts.find(function(a) { return a.name === accName; });
+                const needed = (acc && acc.amount) || 0;
+                ctx.fillStyle = filled < needed ? '#ff4d4f' : '#52c41a';
+                const text = filled < needed ?
+                    formatAmount(filled) + '(缺' + formatAmount(needed - filled) + ')' :
+                    formatAmount(filled);
+                ctx.fillText(text, currentX + accountColWidth / 2, currentY + rowHeight / 2 + 5);
+                currentX += accountColWidth;
+            });
+
+            // 底部说明 - 紧挨表格底部
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('北交所分户计算器', canvas.width / 2, currentY + rowHeight + 30);
+
+            // 转换为图片并下载 - 使用兼容性更好的方案
+            try {
+                // 使用 toDataURL 替代 toBlob，兼容性更好
+                const dataUrl = canvas.toDataURL('image/png');
+
+                // 检查是否手机端
+                if (navigator.userAgent.match(/(iPhone|iPod|iPad|Android)/i)) {
+                    // 手机端：在当前页面下方显示图片，用户可以长按保存
+                    const shareContainer = document.createElement('div');
+                    shareContainer.id = 'mobileShareImage';
+                    shareContainer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;overflow:auto;';
+                    shareContainer.innerHTML = `
+                        <div style="text-align:center;padding:20px;">
+                            <h2 style="color:white;margin-bottom:20px;">${stockName} 分配方案</h2>
+                            <img src="${dataUrl}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);">
+                            <br><br>
+                            <p style="color:#ccc;font-size:16px;">👆 长按图片保存到相册</p>
+                            <button onclick="document.getElementById('mobileShareImage').remove()" style="margin-top:20px;padding:12px 40px;font-size:16px;background:#4A90E2;color:white;border:none;border-radius:25px;">关闭</button>
+                        </div>
+                    `;
+                    document.body.appendChild(shareContainer);
+                } else {
+                    // PC端：直接下载
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = stockName + '分配方案.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            } catch (e) {
+                alert('生成图片失败，请重试：' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>
