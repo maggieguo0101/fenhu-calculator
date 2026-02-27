@@ -713,8 +713,8 @@
             // 添加账户汇总行
             // 复用已有的 accountNames 变量
             let summaryAllocCells = '';
-            let totalNeeded = 0;
             let totalFilled = 0;
+            // 注意：totalNeeded 已在上面第648行定义，这里只累加
 
             accountNames.forEach(function(accName) {
                 const filled = result.accountFilled[accName] || 0;
