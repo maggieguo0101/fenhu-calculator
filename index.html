@@ -452,18 +452,20 @@
             // 标准化分隔符
             let cleanText = text.replace(/，/g, ' ').replace(/,/g, ' ').replace(/、/g, ' ');
 
-            // 1. 找"总申购"金额
+            // 1. 找"总申购"或"每户按照...分配"金额
             const totalMatch = cleanText.match(/总申购[\s:：]*(\d+)/);
-            const perAccount = totalMatch ? parseInt(totalMatch[1]) : 980; // 默认980
+            const perAccountMatch = cleanText.match(/每户按照[\s:：]*(\d+)/);
+            const perAccount = totalMatch ? parseInt(totalMatch[1]) :
+                              (perAccountMatch ? parseInt(perAccountMatch[1]) : 980); // 默认980
 
             // 2. 找"用...账户"指定使用哪些账户
             let accountNames = [];
-            const useMatch = cleanText.match(/用\s*([\u4e00-\u9fa5\w\s]+?)账户/);
+            const useMatch = cleanText.match(/用\s*([\u4e00-\u9fa5a-zA-Z\w\s]+?)账户/);
             if (useMatch) {
                 const namesText = useMatch[1].trim();
-                // 如果有分隔符，直接分割
+                // 如果有分隔符（空格、顿号、逗号、和等），直接分割
                 if (/[\s、,，和跟与]/.test(namesText)) {
-                    accountNames = namesText.split(/[\s、,，和跟与]+/).filter(n => n);
+                    accountNames = namesText.split(/[\s、,，和跟与]+/).filter(n => n && n.trim());
                 } else {
                     // 尝试从出资人名字中匹配（先提取所有出资人）
                     const tempInvestors = extractInvestors(cleanText);
@@ -477,23 +479,38 @@
                         }
                     }
 
-                    // 如果没匹配到，尝试每2-3字分割
+                    // 如果没匹配到，尝试识别中文名字（2-3字）或英文名字
                     if (accountNames.length === 0 && namesText.length >= 2) {
+                        // 中英文混合分割：英文按大写字母或空格，中文按2-3字
                         let i = 0;
                         while (i < namesText.length) {
-                            let found = false;
-                            for (const l of [3, 2]) {
-                                if (i + l <= namesText.length) {
-                                    const chunk = namesText.substring(i, i + l);
-                                    if (chunk.length >= 2) {
-                                        accountNames.push(chunk);
-                                        i += l;
-                                        found = true;
-                                        break;
+                            // 检查是否是英文单词开头
+                            if (/[a-zA-Z]/.test(namesText[i])) {
+                                // 提取连续英文字母
+                                let word = '';
+                                while (i < namesText.length && /[a-zA-Z]/.test(namesText[i])) {
+                                    word += namesText[i];
+                                    i++;
+                                }
+                                if (word) accountNames.push(word);
+                            } else if (/[\u4e00-\u9fa5]/.test(namesText[i])) {
+                                // 中文：尝试2-3字
+                                let found = false;
+                                for (const l of [3, 2]) {
+                                    if (i + l <= namesText.length) {
+                                        const chunk = namesText.substring(i, i + l);
+                                        if (/^[\u4e00-\u9fa5]+$/.test(chunk)) {
+                                            accountNames.push(chunk);
+                                            i += l;
+                                            found = true;
+                                            break;
+                                        }
                                     }
                                 }
+                                if (!found) i++;
+                            } else {
+                                i++;
                             }
-                            if (!found) i++;
                         }
                     }
                 }
@@ -546,23 +563,36 @@
 
         // 辅助函数：从文本中提取出资人
         function extractInvestors(text) {
-            // 移除"总申购XXX"和"用XXX账户"部分
-            let clean = text.replace(/总申购[\s:：]*\d+/g, '');
-            clean = clean.replace(/用\s*[\u4e00-\u9fa5\w\s]+账户/g, '');
+            // 移除指令部分
+            let clean = text.replace(/每户按照[\s:：]*\d+.*分配/g, '');
+            clean = clean.replace(/用\s*[\u4e00-\u9fa5a-zA-Z\w\s]+账户/g, '');
 
             const investors = {};
-            const keywords = ['出资', '申购', '总申购', '用', '账户', '每个'];
+            const keywords = ['出资', '申购', '总申购', '用', '账户', '每个', '按照', '分配'];
 
-            // 匹配"姓名+数字"格式
-            const pattern = /([\u4e00-\u9fa5]{1,4}|[a-zA-Z]+)\s*(\d+(?:\.\d+)?)/g;
+            // 方案1：匹配"姓名：数字"格式（带冒号）
+            const colonPattern = /([\u4e00-\u9fa5a-zA-Z]+[\u4e00-\u9fa5a-zA-Z\d]*)\s*[：:]\s*(\d+(?:\.\d+)?)/g;
             let match;
 
-            while ((match = pattern.exec(clean)) !== null) {
+            while ((match = colonPattern.exec(clean)) !== null) {
                 const name = match[1].trim();
                 const amount = parseFloat(match[2]);
 
-                if (!keywords.includes(name) && name.length <= 4) {
+                if (!keywords.includes(name) && name.length >= 1) {
                     investors[name] = amount;
+                }
+            }
+
+            // 如果没找到，尝试方案2：匹配"姓名 数字"格式（空格分隔）
+            if (Object.keys(investors).length === 0) {
+                const spacePattern = /([\u4e00-\u9fa5]{1,4}|[a-zA-Z]+)\s+(\d+(?:\.\d+)?)/g;
+                while ((match = spacePattern.exec(clean)) !== null) {
+                    const name = match[1].trim();
+                    const amount = parseFloat(match[2]);
+
+                    if (!keywords.includes(name) && name.length >= 1) {
+                        investors[name] = amount;
+                    }
                 }
             }
 
