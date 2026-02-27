@@ -219,6 +219,33 @@
             margin-bottom: 15px;
         }
 
+        .quick-input-hint {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            line-height: 1.5;
+        }
+
+        .quick-input-textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            resize: vertical;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+
+        .quick-input-textarea:focus {
+            outline: none;
+            border-color: #4A90E2;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -244,6 +271,13 @@
         <div class="card">
             <div class="section-title">申购股票名称</div>
             <input type="text" id="stockName" class="input-field stock-name-input" placeholder="请输入申购股票名称（可选）">
+        </div>
+
+        <div class="card">
+            <div class="section-title">快捷输入（可选）</div>
+            <div class="quick-input-hint">输入格式：张三100，李四200，王五300，总申购300，用张三李四账户</div>
+            <textarea id="quickInput" class="quick-input-textarea" placeholder="例如：张三100，李四200，王五300，总申购300，用张三李四账户&#10;或者：出资 张三100 李四200，申购 账户A300 账户B300"></textarea>
+            <button class="btn btn-secondary" onclick="parseQuickInput()">解析并填充</button>
         </div>
 
         <div class="card">
@@ -403,6 +437,136 @@
 
         function updateInvestorAmount(index, value) {
             investors[index].amount = parseFloat(value) || 0;
+        }
+
+        // 快捷输入解析
+        function parseQuickInput() {
+            const text = document.getElementById('quickInput').value.trim();
+            if (!text) {
+                showError('请输入快捷指令');
+                return;
+            }
+
+            hideError();
+
+            // 标准化分隔符
+            let cleanText = text.replace(/，/g, ' ').replace(/,/g, ' ').replace(/、/g, ' ');
+
+            // 1. 找"总申购"金额
+            const totalMatch = cleanText.match(/总申购[\s:：]*(\d+)/);
+            const perAccount = totalMatch ? parseInt(totalMatch[1]) : 980; // 默认980
+
+            // 2. 找"用...账户"指定使用哪些账户
+            let accountNames = [];
+            const useMatch = cleanText.match(/用\s*([\u4e00-\u9fa5\w\s]+?)账户/);
+            if (useMatch) {
+                const namesText = useMatch[1].trim();
+                // 如果有分隔符，直接分割
+                if (/[\s、,，和跟与]/.test(namesText)) {
+                    accountNames = namesText.split(/[\s、,，和跟与]+/).filter(n => n);
+                } else {
+                    // 尝试从出资人名字中匹配（先提取所有出资人）
+                    const tempInvestors = extractInvestors(cleanText);
+                    const sortedNames = Object.keys(tempInvestors).sort((a, b) => b.length - a.length);
+
+                    let remaining = namesText;
+                    for (const name of sortedNames) {
+                        if (remaining.includes(name)) {
+                            accountNames.push(name);
+                            remaining = remaining.replace(name, '');
+                        }
+                    }
+
+                    // 如果没匹配到，尝试每2-3字分割
+                    if (accountNames.length === 0 && namesText.length >= 2) {
+                        let i = 0;
+                        while (i < namesText.length) {
+                            let found = false;
+                            for (const l of [3, 2]) {
+                                if (i + l <= namesText.length) {
+                                    const chunk = namesText.substring(i, i + l);
+                                    if (chunk.length >= 2) {
+                                        accountNames.push(chunk);
+                                        i += l;
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!found) i++;
+                        }
+                    }
+                }
+            }
+
+            // 3. 提取出资人信息
+            const investorsData = extractInvestors(cleanText);
+
+            if (Object.keys(investorsData).length === 0) {
+                showError('未能识别出资人信息，请检查格式（如：张三100）');
+                return;
+            }
+
+            // 如果没有指定账户名，默认使用所有出资人名字
+            if (accountNames.length === 0) {
+                accountNames = Object.keys(investorsData);
+            }
+
+            // 填充数据
+            accounts = accountNames.map((name, index) => ({
+                id: index + 1,
+                name: name,
+                amount: perAccount
+            }));
+
+            investors = Object.entries(investorsData).map(([name, amount], index) => ({
+                id: index + 1,
+                name: name,
+                amount: amount
+            }));
+
+            renderAccounts();
+            renderInvestors();
+
+            // 清空快捷输入框
+            document.getElementById('quickInput').value = '';
+
+            // 显示成功提示
+            const hint = document.querySelector('.quick-input-hint');
+            const originalText = hint.textContent;
+            hint.textContent = `✅ 已解析：${accounts.length}个账户，${investors.length}个出资人`;
+            hint.style.background = '#f6ffed';
+            hint.style.color = '#52c41a';
+            setTimeout(() => {
+                hint.textContent = originalText;
+                hint.style.background = '#f5f5f5';
+                hint.style.color = '#666';
+            }, 2000);
+        }
+
+        // 辅助函数：从文本中提取出资人
+        function extractInvestors(text) {
+            // 移除"总申购XXX"和"用XXX账户"部分
+            let clean = text.replace(/总申购[\s:：]*\d+/g, '');
+            clean = clean.replace(/用\s*[\u4e00-\u9fa5\w\s]+账户/g, '');
+
+            const investors = {};
+            const keywords = ['出资', '申购', '总申购', '用', '账户', '每个'];
+
+            // 匹配"姓名+数字"格式
+            const pattern = /([\u4e00-\u9fa5]{1,4}|[a-zA-Z]+)\s*(\d+(?:\.\d+)?)/g;
+            let match;
+
+            while ((match = pattern.exec(clean)) !== null) {
+                const name = match[1].trim();
+                const amount = parseFloat(match[2]);
+
+                if (!keywords.includes(name) && name.length <= 4) {
+                    investors[name] = amount;
+                }
+            }
+
+            return investors;
         }
 
         function clearAll() {
