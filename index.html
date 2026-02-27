@@ -707,7 +707,7 @@
             });
 
             // 添加账户汇总行
-            const accountNames = Object.keys(result.allocation);
+            // 复用已有的 accountNames 变量
             let summaryAllocCells = '';
             let totalNeeded = 0;
             let totalFilled = 0;
