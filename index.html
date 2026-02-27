@@ -301,30 +301,34 @@
         // 渲染账户列表
         function renderAccounts() {
             const container = document.getElementById('accountsList');
-            container.innerHTML = accounts.map((account, index) => `
+            container.innerHTML = accounts.map((account, index) => {
+                const safeName = (account.name || '').replace(/"/g, '&quot;');
+                return `
                 <div class="input-row">
                     <input type="text" class="input-field" placeholder="账户名称"
-                           value="${account.name}" onchange="updateAccountName(${index}, this.value)">
+                           value="${safeName}" onchange="updateAccountName(${index}, this.value)">
                     <input type="number" class="input-field amount-field" placeholder="金额（万）"
                            value="${account.amount}" onchange="updateAccountAmount(${index}, this.value)">
                     <button class="btn btn-remove" onclick="removeAccount(${index})"
                             style="${accounts.length <= 1 ? 'display:none' : ''}">删除</button>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // 渲染出资人列表
         function renderInvestors() {
             const container = document.getElementById('investorsList');
-            container.innerHTML = investors.map((investor, index) => `
+            container.innerHTML = investors.map((investor, index) => {
+                const safeName = (investor.name || '').replace(/"/g, '&quot;');
+                return `
                 <div class="input-row">
                     <input type="text" class="input-field" placeholder="出资人姓名"
-                           value="${investor.name}" onchange="updateInvestorName(${index}, this.value)">
+                           value="${safeName}" onchange="updateInvestorName(${index}, this.value)">
                     <input type="number" class="input-field amount-field" placeholder="出资金额（万）"
                            value="${investor.amount}" onchange="updateInvestorAmount(${index}, this.value)">
                     <button class="btn btn-remove" onclick="removeInvestor(${index})">删除</button>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // 填充示例数据（使用通用名字）
