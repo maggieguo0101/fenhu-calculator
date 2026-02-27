@@ -358,14 +358,10 @@
             console.log('fillExampleData: 渲染完成');
         }
 
-        // 页面加载时初始化空数据
+        // 页面加载时自动填充示例数据
         window.onload = function() {
             console.log('页面加载完成');
-            // 默认添加一个空账户和一个空出资人
-            accounts = [{ id: 1, name: '', amount: 980 }];
-            investors = [{ id: 1, name: '', amount: 0 }];
-            renderAccounts();
-            renderInvestors();
+            fillExampleData();
         };
 
         // 其他函数保持不变...
