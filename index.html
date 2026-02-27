@@ -714,13 +714,13 @@
             // 复用已有的 accountNames 变量
             let summaryAllocCells = '';
             let totalFilled = 0;
-            // 注意：totalNeeded 已在上面第648行定义，这里只累加
+            // 注意：totalNeeded 已在上面第648行定义并计算完成，这里直接使用
 
             accountNames.forEach(function(accName) {
                 const filled = result.accountFilled[accName] || 0;
                 const acc = accounts.find(function(a) { return a.name === accName; });
                 const needed = (acc && acc.amount) || 0;
-                totalNeeded += needed;
+                // 不再重复累加 totalNeeded，因为它已在上方计算完成
                 totalFilled += filled;
                 summaryAllocCells += `<td style="text-align: right; color: ${filled < needed ? '#ff4d4f' : '#52c41a'};">
                     ${formatAmount(filled)}${filled < needed ? ' (缺口' + formatAmount(needed - filled) + ')' : ''}
