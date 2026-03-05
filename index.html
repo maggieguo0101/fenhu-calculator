@@ -414,7 +414,7 @@
 
         function addInvestor() {
             const newId = Math.max(...investors.map(i => i.id), 0) + 1;
-            investors.push({ id: newId, name: '', amount: '' });
+            investors.push({ id: newId, name: '', amount: 0 });
             renderInvestors();
         }
 
@@ -593,9 +593,9 @@
                 { id: 2, name: '', amount: 980 }
             ];
             investors = [
-                { id: 1, name: '', amount: '' },
-                { id: 2, name: '', amount: '' },
-                { id: 3, name: '', amount: '' }
+                { id: 1, name: '', amount: 0 },
+                { id: 2, name: '', amount: 0 },
+                { id: 3, name: '', amount: 0 }
             ];
             renderAccounts();
             renderInvestors();
