@@ -864,7 +864,10 @@
             const accountNames = Object.keys(result.allocation);
             let headerHTML = '<tr><th>出资人</th><th>出资金额</th>';
             accountNames.forEach(function(accName) {
-                headerHTML += '<th>' + accName + '</th>';
+                // 查找该账户的申购金额
+                const acc = accounts.find(function(a) { return a.name === accName; });
+                const needed = (acc && acc.amount) || 0;
+                headerHTML += '<th>' + accName + '<br><small style="font-weight:normal;color:#666;">' + formatAmount(needed) + '</small></th>';
             });
             headerHTML += '<th>剩余资金</th></tr>';
             thead.innerHTML = headerHTML;
