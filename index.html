@@ -524,25 +524,13 @@
                 return;
             }
 
-            // 如果没有指定账户名，默认使用所有出资人名字
-            if (accountNames.length === 0) {
-                accountNames = Object.keys(investorsData);
-            }
-
-            // 填充数据
-            accounts = accountNames.map((name, index) => ({
-                id: index + 1,
-                name: name,
-                amount: perAccount
-            }));
-
+            // 只填充出资人信息，不自动修改账户信息
             investors = Object.entries(investorsData).map(([name, amount], index) => ({
                 id: index + 1,
                 name: name,
                 amount: amount
             }));
 
-            renderAccounts();
             renderInvestors();
 
             // 清空快捷输入框
@@ -551,7 +539,7 @@
             // 显示成功提示
             const hint = document.querySelector('.quick-input-hint');
             const originalText = hint.textContent;
-            hint.textContent = `✅ 已解析：${accounts.length}个账户，${investors.length}个出资人`;
+            hint.textContent = `✅ 已解析 ${investors.length} 个出资人，请手动填写账户信息`;
             hint.style.background = '#f6ffed';
             hint.style.color = '#52c41a';
             setTimeout(() => {
@@ -917,15 +905,18 @@
                 </td>`;
             });
 
+            // 计算总出资金额（所有出资人金额之和）
+            const totalInvestorAmount = investors.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
             const summaryRow = document.createElement('tr');
             summaryRow.style.backgroundColor = '#f0f2f5';
             summaryRow.style.fontWeight = 'bold';
             summaryRow.innerHTML = `
                 <td>账户汇总</td>
-                <td style="text-align: right;">${formatAmount(totalNeeded)}</td>
+                <td style="text-align: right;">${formatAmount(totalInvestorAmount)}</td>
                 ${summaryAllocCells}
                 <td style="text-align: right; color: #ff4d4f;">
-                    ${formatAmount(totalNeeded - totalFilled)}
+                    ${formatAmount(totalInvestorAmount - totalFilled)}
                 </td>
             `;
             tbody.appendChild(summaryRow);
