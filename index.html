@@ -828,8 +828,11 @@
                 return sum + (accountData && accountData.amount || 0);
             }, 0);
 
-            // 计算差额：正数表示溢出，负数表示缺口
-            const diff = result.totalUsed - totalNeeded;
+            // 计算总出资金额
+            const totalInvestorAmount = investors.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
+            // 计算差额：正数表示溢出（出资>需求），负数表示缺口（出资<需求）
+            const diff = totalInvestorAmount - totalNeeded;
             const isOverflow = diff > 0;
             const diffAbs = Math.abs(diff);
             const diffSign = isOverflow ? '+' : '-';
@@ -840,7 +843,7 @@
             summary.innerHTML = `
                 <div class="summary-item ${isOverflow ? 'success' : (diff < 0 ? 'warning' : '')}">
                     <div class="summary-label">已募集</div>
-                    <div class="summary-value">${formatAmount(result.totalUsed)}</div>
+                    <div class="summary-value">${formatAmount(totalInvestorAmount)}</div>
                 </div>
                 <div class="summary-item ${diffClass}">
                     <div class="summary-label">资金溢出/缺口</div>
