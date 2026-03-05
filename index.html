@@ -828,15 +828,23 @@
                 return sum + (accountData && accountData.amount || 0);
             }, 0);
 
+            // 计算差额：正数表示溢出，负数表示缺口
+            const diff = result.totalUsed - totalNeeded;
+            const isOverflow = diff > 0;
+            const diffAbs = Math.abs(diff);
+            const diffSign = isOverflow ? '+' : '-';
+            const diffClass = isOverflow ? 'success' : 'warning';
+            const diffColor = isOverflow ? '#52c41a' : '#ff4d4f';
+
             // 显示汇总信息
             summary.innerHTML = `
-                <div class="summary-item ${result.totalUsed < totalNeeded ? 'warning' : 'success'}">
+                <div class="summary-item ${isOverflow ? 'success' : (diff < 0 ? 'warning' : '')}">
                     <div class="summary-label">已募集</div>
                     <div class="summary-value">${formatAmount(result.totalUsed)}</div>
                 </div>
-                <div class="summary-item warning">
-                    <div class="summary-label">资金缺口</div>
-                    <div class="summary-value">${formatAmount(totalNeeded - result.totalUsed)}</div>
+                <div class="summary-item ${diffClass}">
+                    <div class="summary-label">资金溢出/缺口</div>
+                    <div class="summary-value" style="color: ${diffColor};">${diffSign}${formatAmount(diffAbs)}</div>
                 </div>
                 <div class="summary-item">
                     <div class="summary-label">参与人数</div>
