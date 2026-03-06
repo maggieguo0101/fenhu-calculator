@@ -446,12 +446,11 @@
                 <div id="stockNameDisplay" style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: bold;"></div>
                 <div class="table-container">
                     <table id="resultTable">
-                        <thead>
+                        <thead id="resultHead">
                             <tr>
                                 <th>出资人</th>
                                 <th>出资金额</th>
-                                <th>长月账户</th>
-                                <th>maggie账户</th>
+                                <!-- 账户列将动态生成 -->
                                 <th>账户缺口</th>
                             </tr>
                         </thead>
@@ -1190,10 +1189,12 @@
                 stockNameDisplay.textContent = '申购分配方案';
             }
 
+            // 获取有效的账户列表（有名字的账户）
+            const validAccounts = accounts.filter(a => a.name);
+
             // 计算总需求
-            const totalNeeded = Object.keys(result.accountFilled).reduce((sum, account) => {
-                const accountData = accounts.find(function(a) { return a.name === account; });
-                return sum + (accountData && accountData.amount || 0);
+            const totalNeeded = validAccounts.reduce((sum, account) => {
+                return sum + (account.amount || 0);
             }, 0);
 
             // 显示汇总信息
@@ -1212,6 +1213,15 @@
                 </div>
             `;
 
+            // 动态生成表头
+            const thead = document.getElementById('resultHead');
+            let headerHTML = '<tr><th>出资人</th><th>出资金额</th>';
+            validAccounts.forEach(account => {
+                headerHTML += `<th>${account.name}账户</th>`;
+            });
+            headerHTML += '<th>账户缺口</th></tr>';
+            thead.innerHTML = headerHTML;
+
             // 生成详细表格
             const tbody = document.getElementById('resultBody');
             tbody.innerHTML = '';
@@ -1220,46 +1230,48 @@
             investors.forEach(investor => {
                 if (!investor.name || investor.amount <= 0) return;
 
-                // 获取该出资人在各账户的分配
-                const changyueAlloc = (result.allocation['长月'] && result.allocation['长月'][investor.name]) || 0;
-                const maggieAlloc = (result.allocation['maggie'] && result.allocation['maggie'][investor.name]) || 0;
+                // 计算该出资人在各账户的分配
+                let totalUsed = 0;
+                let accountCells = '';
 
-                // 计算总使用
-                const totalUsed = changyueAlloc + maggieAlloc;
+                validAccounts.forEach(account => {
+                    const alloc = (result.allocation[account.name] && result.allocation[account.name][investor.name]) || 0;
+                    totalUsed += alloc;
+                    accountCells += `<td style="text-align: right; color: #52c41a;">${alloc > 0 ? formatAmount(alloc) : ''}</td>`;
+                });
 
                 const investorRow = document.createElement('tr');
                 investorRow.innerHTML = `
                     <td>${investor.name}</td>
                     <td style="text-align: right;">${formatAmount(investor.amount)}</td>
-                    <td style="text-align: right; color: #52c41a;">${changyueAlloc > 0 ? formatAmount(changyueAlloc) : ''}</td>
-                    <td style="text-align: right; color: #52c41a;">${maggieAlloc > 0 ? formatAmount(maggieAlloc) : ''}</td>
+                    ${accountCells}
                     <td style="text-align: right; color: #ff4d4f;">${formatAmount(investor.amount - totalUsed)}</td>
                 `;
                 tbody.appendChild(investorRow);
             });
 
             // 添加账户汇总行
-            const changyueFilled = result.accountFilled['长月'] || 0;
-            const maggieFilled = result.accountFilled['maggie'] || 0;
-            const changyueAccount = accounts.find(function(a) { return a.name === '长月'; });
-            const maggieAccount = accounts.find(function(a) { return a.name === 'maggie'; });
-            const changyueNeeded = (changyueAccount && changyueAccount.amount) || 0;
-            const maggieNeeded = (maggieAccount && maggieAccount.amount) || 0;
+            let summaryCells = '';
+            let totalFilled = 0;
+
+            validAccounts.forEach(account => {
+                const filled = result.accountFilled[account.name] || 0;
+                const needed = account.amount || 0;
+                totalFilled += filled;
+                summaryCells += `<td style="text-align: right; color: ${filled < needed ? '#ff4d4f' : '#52c41a'};">
+                    ${formatAmount(filled)}${filled < needed ? ' (缺口' + formatAmount(needed - filled) + ')' : ''}
+                </td>`;
+            });
 
             const summaryRow = document.createElement('tr');
             summaryRow.style.backgroundColor = '#f0f2f5';
             summaryRow.style.fontWeight = 'bold';
             summaryRow.innerHTML = `
                 <td>账户汇总</td>
-                <td style="text-align: right;">${formatAmount(changyueNeeded + maggieNeeded)}</td>
-                <td style="text-align: right; color: ${changyueFilled < changyueNeeded ? '#ff4d4f' : '#52c41a'};">
-                    ${formatAmount(changyueFilled)}${changyueFilled < changyueNeeded ? ' (缺口' + formatAmount(changyueNeeded - changyueFilled) + ')' : ''}
-                </td>
-                <td style="text-align: right; color: ${maggieFilled < maggieNeeded ? '#ff4d4f' : '#52c41a'};">
-                    ${formatAmount(maggieFilled)}${maggieFilled < maggieNeeded ? ' (缺口' + formatAmount(maggieNeeded - maggieFilled) + ')' : ''}
-                </td>
+                <td style="text-align: right;">${formatAmount(totalNeeded)}</td>
+                ${summaryCells}
                 <td style="text-align: right; color: #ff4d4f;">
-                    ${formatAmount((changyueNeeded + maggieNeeded) - (changyueFilled + maggieFilled))}
+                    ${formatAmount(totalNeeded - totalFilled)}
                 </td>
             `;
             tbody.appendChild(summaryRow);
