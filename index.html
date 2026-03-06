@@ -30,6 +30,7 @@
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: relative;
         }
 
         .title {
@@ -42,6 +43,137 @@
         .subtitle {
             font-size: 16px;
             color: #666;
+        }
+
+        /* 语音输入按钮 */
+        .voice-btn {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .voice-btn:hover {
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 6px 16px rgba(74, 144, 226, 0.5);
+        }
+
+        .voice-btn.recording {
+            background: linear-gradient(135deg, #ff4d4f, #ff7875);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.1); }
+        }
+
+        /* 语音输入弹窗 */
+        .voice-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .voice-modal.active {
+            display: flex;
+        }
+
+        .voice-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .voice-modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .voice-hint {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .voice-wave {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 60px;
+            margin: 20px 0;
+        }
+
+        .voice-wave-bar {
+            width: 6px;
+            background: #4A90E2;
+            border-radius: 3px;
+            animation: wave 1s ease-in-out infinite;
+        }
+
+        .voice-wave-bar:nth-child(1) { animation-delay: 0s; height: 20px; }
+        .voice-wave-bar:nth-child(2) { animation-delay: 0.1s; height: 30px; }
+        .voice-wave-bar:nth-child(3) { animation-delay: 0.2s; height: 40px; }
+        .voice-wave-bar:nth-child(4) { animation-delay: 0.3s; height: 35px; }
+        .voice-wave-bar:nth-child(5) { animation-delay: 0.4s; height: 25px; }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1); }
+        }
+
+        .voice-status {
+            font-size: 16px;
+            color: #4A90E2;
+            margin: 15px 0;
+            min-height: 24px;
+        }
+
+        .voice-result {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 14px;
+            color: #333;
+            min-height: 60px;
+        }
+
+        .voice-modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .voice-modal-actions .btn {
+            flex: 1;
         }
 
         .card {
@@ -219,33 +351,6 @@
             margin-bottom: 15px;
         }
 
-        .quick-input-hint {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            background: #f5f5f5;
-            border-radius: 6px;
-            line-height: 1.5;
-        }
-
-        .quick-input-textarea {
-            width: 100%;
-            min-height: 80px;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            resize: vertical;
-            margin-bottom: 10px;
-            font-family: inherit;
-        }
-
-        .quick-input-textarea:focus {
-            outline: none;
-            border-color: #4A90E2;
-        }
-
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -266,18 +371,14 @@
         <div class="header">
             <div class="title">北交所分户计算器</div>
             <div class="subtitle">账户持有人优先，剩余资金按比例分配</div>
+            <button class="voice-btn" onclick="openVoiceModal()" title="语音输入">
+                🎤
+            </button>
         </div>
 
         <div class="card">
             <div class="section-title">申购股票名称</div>
             <input type="text" id="stockName" class="input-field stock-name-input" placeholder="请输入申购股票名称（可选）">
-        </div>
-
-        <div class="card">
-            <div class="section-title">快捷输入（可选）</div>
-            <div class="quick-input-hint">输入格式：张三100，李四200，王五300，总申购300，用张三李四账户</div>
-            <textarea id="quickInput" class="quick-input-textarea" placeholder="例如：张三100，李四200，王五300，总申购300，用张三李四账户&#10;或者：出资 张三100 李四200，申购 账户A300 账户B300"></textarea>
-            <button class="btn btn-secondary" onclick="parseQuickInput()">解析并填充</button>
         </div>
 
         <div class="card">
@@ -307,12 +408,13 @@
                 <div id="stockNameDisplay" style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: bold;"></div>
                 <div class="table-container">
                     <table id="resultTable">
-                        <thead id="resultHead">
+                        <thead>
                             <tr>
                                 <th>出资人</th>
                                 <th>出资金额</th>
-                                <th>账户分配</th>
-                                <th>剩余资金</th>
+                                <th>长月账户</th>
+                                <th>maggie账户</th>
+                                <th>账户缺口</th>
                             </tr>
                         </thead>
                         <tbody id="resultBody"></tbody>
@@ -326,43 +428,333 @@
     <!-- 隐藏的Canvas用于生成图片 -->
     <canvas id="shareCanvas" style="display: none;"></canvas>
 
+    <!-- 语音输入弹窗 -->
+    <div id="voiceModal" class="voice-modal">
+        <div class="voice-modal-content">
+            <div class="voice-modal-title">🎤 语音输入</div>
+            <div class="voice-hint">请说出账户和出资人信息<br>例如："账户1需要980万，张三出300万，李四出200万"</div>
+
+            <div class="voice-wave" id="voiceWave" style="display: none;">
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+            </div>
+
+            <div class="voice-status" id="voiceStatus">点击开始录音</div>
+
+            <div class="voice-result" id="voiceResult" style="display: none;">
+                <strong>识别结果：</strong>
+                <div id="voiceText"></div>
+            </div>
+
+            <div class="voice-modal-actions">
+                <button class="btn btn-secondary" onclick="closeVoiceModal()">取消</button>
+                <button class="btn btn-primary" id="voiceActionBtn" onclick="toggleRecording()">开始录音</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 数据存储
         let accounts = [];
         let investors = [];
         let currentResult = null;
 
+        // ==================== 语音输入功能 ====================
+        let isRecording = false;
+        let recognition = null;
+        let recordedText = '';
+
+        // 初始化语音识别
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.lang = 'zh-CN';
+                recognition.continuous = true;
+                recognition.interimResults = true;
+
+                recognition.onstart = function() {
+                    isRecording = true;
+                    document.getElementById('voiceStatus').textContent = '正在录音...';
+                    document.getElementById('voiceActionBtn').textContent = '停止录音';
+                    document.getElementById('voiceWave').style.display = 'flex';
+                    document.querySelector('.voice-btn').classList.add('recording');
+                };
+
+                recognition.onresult = function(event) {
+                    let finalTranscript = '';
+                    let interimTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    if (finalTranscript) {
+                        recordedText += finalTranscript;
+                    }
+
+                    document.getElementById('voiceText').textContent = recordedText + interimTranscript;
+                    document.getElementById('voiceResult').style.display = 'block';
+                };
+
+                recognition.onend = function() {
+                    if (isRecording) {
+                        // 如果还在录音状态但识别结束了，自动重启
+                        recognition.start();
+                    } else {
+                        finishRecording();
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('语音识别错误:', event.error);
+                    if (event.error === 'not-allowed') {
+                        alert('请允许使用麦克风权限');
+                    } else if (event.error === 'no-speech') {
+                        // 没有检测到语音，继续录音
+                        return;
+                    } else {
+                        document.getElementById('voiceStatus').textContent = '识别出错: ' + event.error;
+                    }
+                    stopRecording();
+                };
+
+                return true;
+            } else {
+                alert('您的浏览器不支持语音识别，请使用 Chrome 或 Safari 浏览器');
+                return false;
+            }
+        }
+
+        function openVoiceModal() {
+            document.getElementById('voiceModal').classList.add('active');
+            recordedText = '';
+            document.getElementById('voiceText').textContent = '';
+            document.getElementById('voiceResult').style.display = 'none';
+            document.getElementById('voiceStatus').textContent = '点击开始录音';
+            document.getElementById('voiceActionBtn').textContent = '开始录音';
+            document.getElementById('voiceWave').style.display = 'none';
+
+            // 检查浏览器支持
+            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+                document.getElementById('voiceStatus').textContent = '浏览器不支持语音识别';
+                document.getElementById('voiceActionBtn').disabled = true;
+            } else {
+                document.getElementById('voiceActionBtn').disabled = false;
+            }
+        }
+
+        function closeVoiceModal() {
+            if (isRecording) {
+                stopRecording();
+            }
+            document.getElementById('voiceModal').classList.remove('active');
+            document.querySelector('.voice-btn').classList.remove('recording');
+        }
+
+        function toggleRecording() {
+            if (!recognition) {
+                if (!initSpeechRecognition()) {
+                    return;
+                }
+            }
+
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        function startRecording() {
+            recordedText = '';
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error('启动录音失败:', e);
+                document.getElementById('voiceStatus').textContent = '启动失败，请重试';
+            }
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            if (recognition) {
+                recognition.stop();
+            }
+            document.getElementById('voiceWave').style.display = 'none';
+            document.querySelector('.voice-btn').classList.remove('recording');
+        }
+
+        function finishRecording() {
+            document.getElementById('voiceStatus').textContent = '录音完成';
+            document.getElementById('voiceActionBtn').textContent = '应用结果';
+            document.getElementById('voiceActionBtn').onclick = applyVoiceResult;
+
+            if (recordedText) {
+                // 自动解析
+                parseVoiceText(recordedText);
+            }
+        }
+
+        // 使用 AI 解析语音文本
+        async function parseVoiceText(text) {
+            document.getElementById('voiceStatus').textContent = '正在解析...';
+
+            try {
+                // 先尝试调用后端 AI 解析
+                const response = await fetch('/api/parse-voice', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: text})
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('voiceResult').innerHTML = `
+                        <strong>✅ 解析结果（${result.method === 'ai' ? 'AI' : '本地'}）：</strong>
+                        <div style="margin-top: 10px;">
+                            <div>📋 账户: ${Object.entries(result.accounts).map(([k,v]) => `${k}:${v}万`).join(', ')}</div>
+                            <div>💰 出资人: ${Object.entries(result.investors).map(([k,v]) => `${k}:${v}万`).join(', ')}</div>
+                        </div>
+                    `;
+                    window.parsedVoiceData = result;
+                    document.getElementById('voiceStatus').textContent = '解析完成，点击应用结果';
+                } else {
+                    // 显示原始文本，让用户手动输入
+                    document.getElementById('voiceResult').innerHTML = `
+                        <strong>⚠️ 未能自动解析，请手动输入：</strong>
+                        <div style="margin-top: 10px; color: #666;">${text}</div>
+                    `;
+                    document.getElementById('voiceStatus').textContent = '请手动输入数据';
+                }
+            } catch (error) {
+                console.error('解析失败:', error);
+                // 回退到前端简单解析
+                const fallback = simpleParseText(text);
+                document.getElementById('voiceResult').innerHTML = `
+                    <strong>⚠️ 本地解析结果：</strong>
+                    <div style="margin-top: 10px;">
+                        <div>📋 账户: ${Object.entries(fallback.accounts).map(([k,v]) => `${k}:${v}万`).join(', ')}</div>
+                        <div>💰 出资人: ${Object.entries(fallback.investors).map(([k,v]) => `${k}:${v}万`).join(', ')}</div>
+                    </div>
+                `;
+                window.parsedVoiceData = fallback;
+                document.getElementById('voiceStatus').textContent = '本地解析完成';
+            }
+        }
+
+        // 前端简单解析（作为 fallback）
+        function simpleParseText(text) {
+            const accounts = {};
+            const investors = {};
+
+            // 尝试匹配账户信息
+            const accountMatches = text.match(/账户[\s]*([一二三四五六七八九十\d]+)[\s]*[:：需]?(?:要)?[\s]*([\d\.]+)[\s]*万?/g);
+            if (accountMatches) {
+                accountMatches.forEach((match, idx) => {
+                    const numMatch = match.match(/账户[\s]*([一二三四五六七八九十\d]+)/);
+                    const amountMatch = match.match(/([\d\.]+)[\s]*万?/);
+                    if (numMatch && amountMatch) {
+                        const name = '账户' + numMatch[1];
+                        accounts[name] = parseFloat(amountMatch[1]);
+                    }
+                });
+            }
+
+            // 尝试匹配出资人信息
+            const investorMatches = text.matchAll(/([\u4e00-\u9fa5a-zA-Z]{2,10})[\s]*[:：出投]?[\s]*([\d\.]+)[\s]*万?/g);
+            for (const match of investorMatches) {
+                const name = match[1].trim();
+                const amount = parseFloat(match[2]);
+                if (name && !name.includes('账户') && amount > 0) {
+                    investors[name] = amount;
+                }
+            }
+
+            // 如果没解析出账户，使用默认值
+            if (Object.keys(accounts).length === 0) {
+                accounts['账户1'] = 980;
+                accounts['账户2'] = 980;
+            }
+
+            return { accounts, investors };
+        }
+
+        function applyVoiceResult() {
+            if (window.parsedVoiceData) {
+                const { accounts: parsedAccounts, investors: parsedInvestors } = window.parsedVoiceData;
+
+                // 设置账户
+                accounts = Object.entries(parsedAccounts).map(([name, amount], idx) => ({
+                    id: idx + 1,
+                    name: name,
+                    amount: amount
+                }));
+
+                // 设置出资人
+                investors = Object.entries(parsedInvestors).map(([name, amount], idx) => ({
+                    id: idx + 1,
+                    name: name,
+                    amount: amount
+                }));
+
+                // 如果没有解析出出资人，保持原有逻辑
+                if (investors.length === 0) {
+                    alert('未能识别出资人信息，请手动输入');
+                }
+
+                renderAccounts();
+                renderInvestors();
+
+                // 如果有有效数据，自动计算
+                if (investors.length > 0) {
+                    calculate();
+                }
+            }
+
+            closeVoiceModal();
+            // 重置按钮事件
+            setTimeout(() => {
+                document.getElementById('voiceActionBtn').onclick = toggleRecording;
+            }, 100);
+        }
+
         // 渲染账户列表
         function renderAccounts() {
             const container = document.getElementById('accountsList');
-            container.innerHTML = accounts.map((account, index) => {
-                const safeName = (account.name || '').replace(/"/g, '&quot;');
-                return `
+            container.innerHTML = accounts.map((account, index) => `
                 <div class="input-row">
                     <input type="text" class="input-field" placeholder="账户名称"
-                           value="${safeName}" onchange="updateAccountName(${index}, this.value)">
+                           value="${account.name}" onchange="updateAccountName(${index}, this.value)">
                     <input type="number" class="input-field amount-field" placeholder="金额（万）"
                            value="${account.amount}" onchange="updateAccountAmount(${index}, this.value)">
                     <button class="btn btn-remove" onclick="removeAccount(${index})"
                             style="${accounts.length <= 1 ? 'display:none' : ''}">删除</button>
                 </div>
-            `}).join('');
+            `).join('');
         }
 
         // 渲染出资人列表
         function renderInvestors() {
             const container = document.getElementById('investorsList');
-            container.innerHTML = investors.map((investor, index) => {
-                const safeName = (investor.name || '').replace(/"/g, '&quot;');
-                return `
+            container.innerHTML = investors.map((investor, index) => `
                 <div class="input-row">
                     <input type="text" class="input-field" placeholder="出资人姓名"
-                           value="${safeName}" onchange="updateInvestorName(${index}, this.value)">
+                           value="${investor.name}" onchange="updateInvestorName(${index}, this.value)">
                     <input type="number" class="input-field amount-field" placeholder="出资金额（万）"
                            value="${investor.amount}" onchange="updateInvestorAmount(${index}, this.value)">
                     <button class="btn btn-remove" onclick="removeInvestor(${index})">删除</button>
                 </div>
-            `}).join('');
+            `).join('');
         }
 
         // 填充示例数据（使用通用名字）
@@ -392,10 +784,14 @@
             console.log('fillExampleData: 渲染完成');
         }
 
-        // 页面加载时自动填充示例数据
+        // 页面加载时初始化空数据
         window.onload = function() {
             console.log('页面加载完成');
-            fillExampleData();
+            // 默认添加一个空账户和一个空出资人
+            accounts = [{ id: 1, name: '', amount: 980 }];
+            investors = [{ id: 1, name: '', amount: 0 }];
+            renderAccounts();
+            renderInvestors();
         };
 
         // 其他函数保持不变...
@@ -414,7 +810,7 @@
 
         function addInvestor() {
             const newId = Math.max(...investors.map(i => i.id), 0) + 1;
-            investors.push({ id: newId, name: '', amount: 0 });
+            investors.push({ id: newId, name: '', amount: '' });
             renderInvestors();
         }
 
@@ -439,163 +835,15 @@
             investors[index].amount = parseFloat(value) || 0;
         }
 
-        // 快捷输入解析
-        function parseQuickInput() {
-            const text = document.getElementById('quickInput').value.trim();
-            if (!text) {
-                showError('请输入快捷指令');
-                return;
-            }
-
-            hideError();
-
-            // 标准化分隔符
-            let cleanText = text.replace(/，/g, ' ').replace(/,/g, ' ').replace(/、/g, ' ');
-
-            // 1. 找"总申购"或"每户按照...分配"金额
-            const totalMatch = cleanText.match(/总申购[\s:：]*(\d+)/);
-            const perAccountMatch = cleanText.match(/每户按照[\s:：]*(\d+)/);
-            const perAccount = totalMatch ? parseInt(totalMatch[1]) :
-                              (perAccountMatch ? parseInt(perAccountMatch[1]) : 980); // 默认980
-
-            // 2. 找"用...账户"指定使用哪些账户
-            let accountNames = [];
-            const useMatch = cleanText.match(/用\s*([\u4e00-\u9fa5a-zA-Z\w\s]+?)账户/);
-            if (useMatch) {
-                const namesText = useMatch[1].trim();
-                // 如果有分隔符（空格、顿号、逗号、和等），直接分割
-                if (/[\s、,，和跟与]/.test(namesText)) {
-                    accountNames = namesText.split(/[\s、,，和跟与]+/).filter(n => n && n.trim());
-                } else {
-                    // 尝试从出资人名字中匹配（先提取所有出资人）
-                    const tempInvestors = extractInvestors(cleanText);
-                    const sortedNames = Object.keys(tempInvestors).sort((a, b) => b.length - a.length);
-
-                    let remaining = namesText;
-                    for (const name of sortedNames) {
-                        if (remaining.includes(name)) {
-                            accountNames.push(name);
-                            remaining = remaining.replace(name, '');
-                        }
-                    }
-
-                    // 如果没匹配到，尝试识别中文名字（2-3字）或英文名字
-                    if (accountNames.length === 0 && namesText.length >= 2) {
-                        // 中英文混合分割：英文按大写字母或空格，中文按2-3字
-                        let i = 0;
-                        while (i < namesText.length) {
-                            // 检查是否是英文单词开头
-                            if (/[a-zA-Z]/.test(namesText[i])) {
-                                // 提取连续英文字母
-                                let word = '';
-                                while (i < namesText.length && /[a-zA-Z]/.test(namesText[i])) {
-                                    word += namesText[i];
-                                    i++;
-                                }
-                                if (word) accountNames.push(word);
-                            } else if (/[\u4e00-\u9fa5]/.test(namesText[i])) {
-                                // 中文：尝试2-3字
-                                let found = false;
-                                for (const l of [3, 2]) {
-                                    if (i + l <= namesText.length) {
-                                        const chunk = namesText.substring(i, i + l);
-                                        if (/^[\u4e00-\u9fa5]+$/.test(chunk)) {
-                                            accountNames.push(chunk);
-                                            i += l;
-                                            found = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (!found) i++;
-                            } else {
-                                i++;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 3. 提取出资人信息
-            const investorsData = extractInvestors(cleanText);
-
-            if (Object.keys(investorsData).length === 0) {
-                showError('未能识别出资人信息，请检查格式（如：张三100）');
-                return;
-            }
-
-            // 只填充出资人信息，不自动修改账户信息
-            investors = Object.entries(investorsData).map(([name, amount], index) => ({
-                id: index + 1,
-                name: name,
-                amount: amount
-            }));
-
-            renderInvestors();
-
-            // 清空快捷输入框
-            document.getElementById('quickInput').value = '';
-
-            // 显示成功提示
-            const hint = document.querySelector('.quick-input-hint');
-            const originalText = hint.textContent;
-            hint.textContent = `✅ 已解析 ${investors.length} 个出资人，请手动填写账户信息`;
-            hint.style.background = '#f6ffed';
-            hint.style.color = '#52c41a';
-            setTimeout(() => {
-                hint.textContent = originalText;
-                hint.style.background = '#f5f5f5';
-                hint.style.color = '#666';
-            }, 2000);
-        }
-
-        // 辅助函数：从文本中提取出资人
-        function extractInvestors(text) {
-            // 移除指令部分
-            let clean = text.replace(/每户按照[\s:：]*\d+.*分配/g, '');
-            clean = clean.replace(/用\s*[\u4e00-\u9fa5a-zA-Z\w\s]+账户/g, '');
-
-            const investors = {};
-            const keywords = ['出资', '申购', '总申购', '用', '账户', '每个', '按照', '分配'];
-
-            // 方案1：匹配"姓名：数字"格式（带冒号）
-            const colonPattern = /([\u4e00-\u9fa5a-zA-Z]+[\u4e00-\u9fa5a-zA-Z\d]*)\s*[：:]\s*(\d+(?:\.\d+)?)/g;
-            let match;
-
-            while ((match = colonPattern.exec(clean)) !== null) {
-                const name = match[1].trim();
-                const amount = parseFloat(match[2]);
-
-                if (!keywords.includes(name) && name.length >= 1) {
-                    investors[name] = amount;
-                }
-            }
-
-            // 如果没找到，尝试方案2：匹配"姓名 数字"格式（空格分隔）
-            if (Object.keys(investors).length === 0) {
-                const spacePattern = /([\u4e00-\u9fa5]{1,4}|[a-zA-Z]+)\s+(\d+(?:\.\d+)?)/g;
-                while ((match = spacePattern.exec(clean)) !== null) {
-                    const name = match[1].trim();
-                    const amount = parseFloat(match[2]);
-
-                    if (!keywords.includes(name) && name.length >= 1) {
-                        investors[name] = amount;
-                    }
-                }
-            }
-
-            return investors;
-        }
-
         function clearAll() {
             accounts = [
-                { id: 1, name: '', amount: 980 },
-                { id: 2, name: '', amount: 980 }
+                { id: 1, name: '长月', amount: 980 },
+                { id: 2, name: 'maggie', amount: 980 }
             ];
             investors = [
-                { id: 1, name: '', amount: 0 },
-                { id: 2, name: '', amount: 0 },
-                { id: 3, name: '', amount: 0 }
+                { id: 1, name: '', amount: '' },
+                { id: 2, name: '', amount: '' },
+                { id: 3, name: '', amount: '' }
             ];
             renderAccounts();
             renderInvestors();
@@ -828,26 +1076,15 @@
                 return sum + (accountData && accountData.amount || 0);
             }, 0);
 
-            // 计算总出资金额
-            const totalInvestorAmount = investors.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-
-            // 计算差额：正数表示溢出（出资>需求），负数表示缺口（出资<需求）
-            const diff = totalInvestorAmount - totalNeeded;
-            const isOverflow = diff > 0;
-            const diffAbs = Math.abs(diff);
-            const diffSign = isOverflow ? '+' : '-';
-            const diffClass = isOverflow ? 'success' : 'warning';
-            const diffColor = isOverflow ? '#52c41a' : '#ff4d4f';
-
             // 显示汇总信息
             summary.innerHTML = `
-                <div class="summary-item ${isOverflow ? 'success' : (diff < 0 ? 'warning' : '')}">
+                <div class="summary-item ${result.totalUsed < totalNeeded ? 'warning' : 'success'}">
                     <div class="summary-label">已募集</div>
-                    <div class="summary-value">${formatAmount(totalInvestorAmount)}</div>
+                    <div class="summary-value">${formatAmount(result.totalUsed)}</div>
                 </div>
-                <div class="summary-item ${diffClass}">
-                    <div class="summary-label">资金溢出/缺口</div>
-                    <div class="summary-value" style="color: ${diffColor};">${diffSign}${formatAmount(diffAbs)}</div>
+                <div class="summary-item warning">
+                    <div class="summary-label">资金缺口</div>
+                    <div class="summary-value">${formatAmount(totalNeeded - result.totalUsed)}</div>
                 </div>
                 <div class="summary-item">
                     <div class="summary-label">参与人数</div>
@@ -856,81 +1093,53 @@
             `;
 
             // 生成详细表格
-            const thead = document.getElementById('resultHead');
             const tbody = document.getElementById('resultBody');
             tbody.innerHTML = '';
-
-            // 动态构建表头
-            const accountNames = Object.keys(result.allocation);
-            let headerHTML = '<tr><th>出资人</th><th>出资金额</th>';
-            accountNames.forEach(function(accName) {
-                // 查找该账户的申购金额
-                const acc = accounts.find(function(a) { return a.name === accName; });
-                const needed = (acc && acc.amount) || 0;
-                headerHTML += '<th>' + accName + '<br><small style="font-weight:normal;color:#666;">' + formatAmount(needed) + '</small></th>';
-            });
-            headerHTML += '<th>剩余资金</th></tr>';
-            thead.innerHTML = headerHTML;
 
             // 按出资人显示，每行一个出资人
             investors.forEach(investor => {
                 if (!investor.name || investor.amount <= 0) return;
 
-                // 动态获取所有账户的分配
-                const accountAllocs = {};
-                let totalUsed = 0;
-                Object.keys(result.allocation).forEach(function(accName) {
-                    const alloc = (result.allocation[accName] && result.allocation[accName][investor.name]) || 0;
-                    accountAllocs[accName] = alloc;
-                    totalUsed += alloc;
-                });
+                // 获取该出资人在各账户的分配
+                const changyueAlloc = (result.allocation['长月'] && result.allocation['长月'][investor.name]) || 0;
+                const maggieAlloc = (result.allocation['maggie'] && result.allocation['maggie'][investor.name]) || 0;
 
-                // 构建动态表格行
-                let allocCells = '';
-                Object.keys(accountAllocs).forEach(function(accName) {
-                    const alloc = accountAllocs[accName];
-                    allocCells += `<td style="text-align: right; color: #52c41a;">${alloc > 0 ? formatAmount(alloc) : ''}</td>`;
-                });
+                // 计算总使用
+                const totalUsed = changyueAlloc + maggieAlloc;
 
                 const investorRow = document.createElement('tr');
                 investorRow.innerHTML = `
                     <td>${investor.name}</td>
                     <td style="text-align: right;">${formatAmount(investor.amount)}</td>
-                    ${allocCells}
+                    <td style="text-align: right; color: #52c41a;">${changyueAlloc > 0 ? formatAmount(changyueAlloc) : ''}</td>
+                    <td style="text-align: right; color: #52c41a;">${maggieAlloc > 0 ? formatAmount(maggieAlloc) : ''}</td>
                     <td style="text-align: right; color: #ff4d4f;">${formatAmount(investor.amount - totalUsed)}</td>
                 `;
                 tbody.appendChild(investorRow);
             });
 
             // 添加账户汇总行
-            // 复用已有的 accountNames 变量
-            let summaryAllocCells = '';
-            let totalFilled = 0;
-            // 注意：totalNeeded 已在上面第648行定义并计算完成，这里直接使用
-
-            accountNames.forEach(function(accName) {
-                const filled = result.accountFilled[accName] || 0;
-                const acc = accounts.find(function(a) { return a.name === accName; });
-                const needed = (acc && acc.amount) || 0;
-                // 不再重复累加 totalNeeded，因为它已在上方计算完成
-                totalFilled += filled;
-                summaryAllocCells += `<td style="text-align: right; color: ${filled < needed ? '#ff4d4f' : '#52c41a'};">
-                    ${formatAmount(filled)}${filled < needed ? ' (缺口' + formatAmount(needed - filled) + ')' : ''}
-                </td>`;
-            });
-
-            // 计算总出资金额（所有出资人金额之和）
-            const totalInvestorAmount = investors.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+            const changyueFilled = result.accountFilled['长月'] || 0;
+            const maggieFilled = result.accountFilled['maggie'] || 0;
+            const changyueAccount = accounts.find(function(a) { return a.name === '长月'; });
+            const maggieAccount = accounts.find(function(a) { return a.name === 'maggie'; });
+            const changyueNeeded = (changyueAccount && changyueAccount.amount) || 0;
+            const maggieNeeded = (maggieAccount && maggieAccount.amount) || 0;
 
             const summaryRow = document.createElement('tr');
             summaryRow.style.backgroundColor = '#f0f2f5';
             summaryRow.style.fontWeight = 'bold';
             summaryRow.innerHTML = `
                 <td>账户汇总</td>
-                <td style="text-align: right;">${formatAmount(totalInvestorAmount)}</td>
-                ${summaryAllocCells}
+                <td style="text-align: right;">${formatAmount(changyueNeeded + maggieNeeded)}</td>
+                <td style="text-align: right; color: ${changyueFilled < changyueNeeded ? '#ff4d4f' : '#52c41a'};">
+                    ${formatAmount(changyueFilled)}${changyueFilled < changyueNeeded ? ' (缺口' + formatAmount(changyueNeeded - changyueFilled) + ')' : ''}
+                </td>
+                <td style="text-align: right; color: ${maggieFilled < maggieNeeded ? '#ff4d4f' : '#52c41a'};">
+                    ${formatAmount(maggieFilled)}${maggieFilled < maggieNeeded ? ' (缺口' + formatAmount(maggieNeeded - maggieFilled) + ')' : ''}
+                </td>
                 <td style="text-align: right; color: #ff4d4f;">
-                    ${formatAmount(totalInvestorAmount - totalFilled)}
+                    ${formatAmount((changyueNeeded + maggieNeeded) - (changyueFilled + maggieFilled))}
                 </td>
             `;
             tbody.appendChild(summaryRow);
